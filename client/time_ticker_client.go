@@ -56,16 +56,16 @@ func (cl *WSClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		for {
 			select {
-			case ts := <-servchan:
+			case update := <-servchan:
+				ts := update.(string) // Cast to the correct type
 				cl.log("(%s) - sending update [%v]\n", peer, ts)
-				func(ts string) {
-					msg, err := json.Marshal(&timeUpdate{ts})
-					if err != nil {
-						cl.log("Bad encoding for %q [%v]\n", ts, err)
-						return
-					}
-					c.send <- []byte(msg)
-				}(ts.(string))
+
+				msg, err := json.Marshal(&timeUpdate{ts})
+				if err != nil {
+					cl.log("Bad encoding for %q [%v]\n", ts, err)
+					return
+				}
+				c.send <- []byte(msg)
 
 			case <-quit:
 				cl.log("(%s)- got quit signal\n", peer)
@@ -75,15 +75,14 @@ func (cl *WSClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	go c.writer()
-	c.reader()
+	// Enable by-directional communication via WS
+	go c.write()
+
+	// Reader will return when WS is closed on the remote client-side
+	c.read()
 
 	// Clean-up
 	quit <- true
-}
-
-type timeUpdate struct {
-	Time string `json:"time"`
 }
 
 type connection struct {
@@ -91,20 +90,19 @@ type connection struct {
 	ws   *websocket.Conn
 }
 
-func (c *connection) reader() {
+func (c *connection) read() {
 	for {
 		_, _, err := c.ws.ReadMessage()
 		if err != nil {
+			// Close on error
 			break
 		}
-		// log.Println("[From WS]", msg)
 	}
 	c.ws.Close()
 }
 
-func (c *connection) writer() {
+func (c *connection) write() {
 	for msg := range c.send {
-		// log.Println("[To WS]", string(msg))
 		err := c.ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			log.Println(err)
@@ -112,4 +110,9 @@ func (c *connection) writer() {
 		}
 	}
 	c.ws.Close()
+}
+
+// Helper type to allow for fast JSON serialization
+type timeUpdate struct {
+	Time string `json:"time"`
 }

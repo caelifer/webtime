@@ -70,7 +70,7 @@ const htmlTemplate = `
     }
 
     function updateTime(msg) {
-        var ts = jQuery.parseJSON(msg);
+        var ts = $.parseJSON(msg);
         timeDiv.html(ts["time"]);
     }
 

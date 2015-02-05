@@ -21,11 +21,14 @@ var homeTemplate = template.Must(template.New("time").Parse(htmlTemplate))
 
 func main() {
 	flag.Parse()
+	host := "localhost"
 
 	// Run HTTP server
 	http.HandleFunc("/time/", homeHandler)
 	http.HandleFunc("/ws/", wsHandler)
 	http.HandleFunc("/", notFoundHandler)
+
+	log.Printf("Running webserver on http://%s:%s/\n", host, *port)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }
 
@@ -37,10 +40,6 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprint(w, "custom 404")
 }
-
-//      param := &struct{ Time string }{
-//              Time: time.Now().Local().Format("3:04:05 PM"),
-//      }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err := homeTemplate.Execute(w, r.Host); err != nil {

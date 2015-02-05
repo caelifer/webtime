@@ -47,7 +47,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type TimeUpdate struct {
+type timeUpdate struct {
 	Time string `json:"time"`
 }
 
@@ -70,7 +70,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			<-time.Tick(1 * time.Second)
 
 			go func(ts string) {
-				msg, err := json.Marshal(&TimeUpdate{ts})
+				msg, err := json.Marshal(&timeUpdate{ts})
 				if err != nil {
 					log.Println("Bad encoding for", ts, err)
 					return

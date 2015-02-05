@@ -26,8 +26,10 @@ func main() {
 	host := "localhost"
 
 	// Setup routes
+	http.Handle("/ws/", client.NewWSClient(timeTicker))
+
+	// more routes
 	http.HandleFunc("/time/", homeHandler)
-	http.HandleFunc("/ws/", wsHandler)
 	http.HandleFunc("/", notFoundHandler)
 
 	// Run HTTP server
@@ -48,10 +50,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err := homeTemplate.Execute(w, r.Host); err != nil {
 		handleError(err, w, r)
 	}
-}
-
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	client.NewWSClient(timeTicker).ServeHTTP(w, r)
 }
 
 const htmlTemplate = `

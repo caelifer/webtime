@@ -47,6 +47,7 @@ func (tu *TimeTicker) Service(quit <-chan bool) <-chan interface{} {
 	// Register for periodic updates and run in a separte goroutine
 	go func() {
 		tu.c.L.Lock()
+		defer tu.c.L.Unlock() // Always unlock when we are done
 
 	LOOP:
 		for {
@@ -62,7 +63,6 @@ func (tu *TimeTicker) Service(quit <-chan bool) <-chan interface{} {
 		}
 
 		// Our client is done. Time to clean-up.
-		tu.c.L.Unlock()
 		close(out)
 		log.Println("TimeTicker: Cleaned up Ticker() resources")
 	}()

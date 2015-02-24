@@ -106,10 +106,10 @@ func (c *connection) write() {
 		err := c.ws.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			log.Println(err)
+			c.ws.Close()
 			break
 		}
 	}
-	c.ws.Close()
 }
 
 // Helper type to allow for fast JSON serialization

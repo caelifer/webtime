@@ -62,6 +62,7 @@ func (cl *WSClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			case <-quit:
 				cl.log("(%s)- got quit signal\n", peer)
+				close(c.send)
 				close(quit)
 				return
 			}

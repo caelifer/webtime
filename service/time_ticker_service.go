@@ -64,7 +64,7 @@ func (tu *TimeTicker) Service(quit <-chan bool) <-chan interface{} {
 
 		// Our client is done. Time to clean-up.
 		close(out)
-		log.Println("TimeTicker: Cleaned up Ticker() resources")
+		log.Println("[SERVICE] TimeTicker: Cleaned up client's Service resources")
 	}()
 
 	return out

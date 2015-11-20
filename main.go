@@ -29,8 +29,8 @@ func main() {
 	http.Handle("/ws/", client.NewWSClient(timeTicker))
 
 	// more routes
-	http.HandleFunc("/time/", homeHandler)
-	http.HandleFunc("/", notFoundHandler)
+	http.HandleFunc("/test/", notFoundHandler)
+	http.HandleFunc("/", homeHandler)
 
 	// Run HTTP server
 	log.Printf("Running webserver on http://%s:%s/\n", host, *port)

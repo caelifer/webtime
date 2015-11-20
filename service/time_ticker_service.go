@@ -14,15 +14,15 @@ type TimeTicker struct {
 
 func NewTimeTicker() *TimeTicker {
 	var mtx sync.RWMutex
-	updater := &TimeTicker{
+	ticker := &TimeTicker{
 		m: &mtx,
 		c: sync.NewCond(mtx.RLocker()),
 	}
 
 	// Start updater on the background
-	go updater.start()
+	go ticker.start()
 
-	return updater
+	return ticker
 }
 
 func (tu *TimeTicker) start() {
@@ -47,6 +47,7 @@ func (tu *TimeTicker) Service(quit <-chan bool) <-chan interface{} {
 	// Register for periodic updates and run in a separte goroutine
 	go func() {
 		tu.c.L.Lock()
+		defer tu.c.L.Unlock() // Always unlock when we are done
 
 	LOOP:
 		for {
@@ -59,13 +60,11 @@ func (tu *TimeTicker) Service(quit <-chan bool) <-chan interface{} {
 			}
 
 			tu.c.Wait()
-
 		}
 
 		// Our client is done. Time to clean-up.
-		tu.c.L.Unlock()
 		close(out)
-		log.Println("TimeTicker: Cleaned up Ticker() resources")
+		log.Println("[SERVICE] TimeTicker: Cleaned up client's Service resources")
 	}()
 
 	return out

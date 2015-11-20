@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -38,7 +37,7 @@ func (cl *WSClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Connection object
 	c := &connection{
-		send: make(chan []byte, 256),
+		send: make(chan *timeUpdate, 256),
 		ws:   ws,
 	}
 
@@ -60,16 +59,11 @@ func (cl *WSClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			case update := <-servchan:
 				ts := update.(string) // Cast to the correct type
 				cl.log("(%s) - sending update [%v]\n", peer, ts)
-
-				msg, err := json.Marshal(&timeUpdate{ts})
-				if err != nil {
-					cl.log("Bad encoding for %q [%v]\n", ts, err)
-					return
-				}
-				c.send <- []byte(msg)
+				c.send <- &timeUpdate{ts}
 
 			case <-quit:
 				cl.log("(%s)- got quit signal\n", peer)
+				close(c.send)
 				return
 			}
 		}
@@ -86,7 +80,7 @@ func (cl *WSClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type connection struct {
-	send chan []byte
+	send chan *timeUpdate
 	ws   *websocket.Conn
 }
 
@@ -102,14 +96,14 @@ func (c *connection) read() {
 }
 
 func (c *connection) write() {
-	for msg := range c.send {
-		err := c.ws.WriteMessage(websocket.TextMessage, msg)
+	for tu := range c.send {
+		err := c.ws.WriteJSON(tu)
 		if err != nil {
 			log.Println(err)
+			c.ws.Close()
 			break
 		}
 	}
-	c.ws.Close()
 }
 
 // Helper type to allow for fast JSON serialization

@@ -54,6 +54,7 @@ func (cl *WSClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Loop in the separate goroutine
 	go func() {
+		defer close(quit) // make sure to clean-up always
 		for {
 			select {
 			case update := <-servchan:
@@ -69,7 +70,6 @@ func (cl *WSClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			case <-quit:
 				cl.log("(%s)- got quit signal\n", peer)
-				close(quit)
 				return
 			}
 		}
